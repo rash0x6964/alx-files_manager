@@ -9,4 +9,3 @@ const redisClient = require('./utils/redis.js');
   setTimeout(async () => {
     console.log('4> ', await redisClient.get('myKey'));
   }, 1000 * 10);
-})();
