@@ -13,7 +13,7 @@ router.post('/users', UsersController.postNew);
 /** Authenticate a user routes: */
 
 router.get('/connect', AuthController.getConnect);
-router.get('/disconnect', AuthController.Disconnect);
-router.get('/me', UsersController.getMe);
+router.get('/disconnect', AuthController.getDisconnect);
+router.get('/users/me', UsersController.getMe);
 
 module.exports = router;
