@@ -1,5 +1,7 @@
 const sha1 = require('sha1');
+const { ObjectId } = require('mongodb');
 const dbClient = require('../utils/db');
+const redisClient = require('../utils/redis');
 
 class UsersController {
   static async postNew(req, res) {
@@ -29,6 +31,23 @@ class UsersController {
     console.log(result);
 
     return res.status(201).json({ id: result.insertedId, email });
+  }
+
+  static async getMe(req, res) {
+    try {
+      const userToken = req.header('X-Token');
+      const authKey = `auth_${userToken}`;
+      const userID = await redisClient.get(authKey);
+      console.log('USER KEY GET ME', userID);
+      if (!userID) {
+        res.status(401).json({ error: 'Unauthorized' });
+      }
+      const user = await dbClient.getUser({ _id: ObjectId(userID) });
+      res.json({ id: user._id, email: user.email });
+    } catch (error) {
+      console.log(error);
+      res.status(500).json({ error: 'Server error' });
+    }
   }
 }
 
