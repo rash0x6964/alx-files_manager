@@ -7,7 +7,7 @@ class AuthController {
   static async getConnect(request, response) {
     const authHeader = request.headers.authorization;
     if (!authHeader) {
-      response.status(401).json({ error: 'Unauthorized' });
+      return response.status(401).json({ error: 'Unauthorized' });
     }
     try {
       const auth = Buffer.from(authHeader.split(' ')[1], 'base64')
@@ -16,14 +16,14 @@ class AuthController {
       const email = auth[0];
       const pass = sha1(auth[1]);
 
-      const user = await dbClient.getUser({ email });
+      const user = await dbClient.db.collection('users').findOne({ email });
 
       if (!user) {
-        response.status(401).json({ error: 'Unauthorized' });
+        return response.status(401).json({ error: 'Unauthorized' });
       }
 
       if (pass !== user.password) {
-        response.status(401).json({ error: 'Unauthorized' });
+        return response.status(401).json({ error: 'Unauthorized' });
       }
 
       const token = uuidv4();
@@ -31,10 +31,10 @@ class AuthController {
       const duration = 60 * 60 * 24;
       await redisClient.set(key, user._id.toString(), duration);
 
-      response.status(200).json({ token });
+      return response.status(200).json({ token });
     } catch (err) {
       console.log(err);
-      response.status(500).json({ error: 'Server error' });
+      return response.status(500).json({ error: 'Server error' });
     }
   }
 
@@ -43,13 +43,13 @@ class AuthController {
       const userToken = request.header('X-Token');
       const userKey = await redisClient.get(`auth_${userToken}`);
       if (!userKey) {
-        response.status(401).json({ error: 'Unauthorized' });
+        return response.status(401).json({ error: 'Unauthorized' });
       }
       await redisClient.del(`auth_${userToken}`);
-      response.status(204).send('Disconnected');
+      return response.status(204).send('Disconnected');
     } catch (err) {
       console.log(err);
-      response.status(500).json({ error: 'Server error' });
+      return response.status(500).json({ error: 'Server error' });
     }
   }
 }

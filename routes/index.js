@@ -18,8 +18,8 @@ router.post('/users', UsersController.postNew);
 /** Authenticate a user routes: */
 
 router.get('/connect', AuthController.getConnect);
-router.get('/disconnect', AuthController.Disconnect);
-router.get('/me', UsersController.getMe);
+router.get('/disconnect', AuthController.getDisconnect);
+router.get('/users/me', UsersController.getMe);
 
 // Create a new file in DB and in disk
 router.post('/files', FilesController.postUpload);
