@@ -38,11 +38,14 @@ class UsersController {
       const userToken = req.header('X-Token');
       const authKey = `auth_${userToken}`;
       const userID = await redisClient.get(authKey);
-      console.log('USER KEY GET ME', userID);
+
       if (!userID) {
         return res.status(401).json({ error: 'Unauthorized' });
       }
-      const user = await dbClient.db.collection('users').findOne({ _id: ObjectId(userID) });
+
+      const user = await dbClient.db
+        .collection('users')
+        .findOne({ _id: ObjectId(userID) });
       return res.json({ id: user._id, email: user.email });
     } catch (error) {
       console.log(error);
