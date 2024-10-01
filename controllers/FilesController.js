@@ -94,11 +94,11 @@ class FilesController {
 
   static async getShow(req, res) {
     const token = req.header('X-Token');
-    if (!token) {
+    const userId = await redisClient.get(`auth_${token}`);
+    if (!userId) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
-    const userId = await redisClient.get(`auth_${token}`);
     const fileId = req.params.id || '';
 
     const file = await dbClient.db.collection('files').findOne({
@@ -121,7 +121,8 @@ class FilesController {
 
   static async getIndex(req, res) {
     const token = req.header('X-Token');
-    if (!token) {
+    const userId = await redisClient.get(`auth_${token}`);
+    if (!userId) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
 

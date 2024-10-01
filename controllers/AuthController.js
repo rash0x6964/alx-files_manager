@@ -10,19 +10,19 @@ class AuthController {
       return response.status(401).json({ error: 'Unauthorized' });
     }
     try {
-      const auth = Buffer.from(authHeader.split(' ')[1], 'base64')
-        .toString()
-        .split(':');
-      const email = auth[0];
-      const pass = sha1(auth[1]);
+      const auth = Buffer.from(authHeader.split(' ')[1], 'base64').toString();
+      const [email, pass] = auth.split(':');
 
-      const user = await dbClient.db.collection('users').findOne({ email });
-
-      if (!user) {
+      if (!email || !pass) {
         return response.status(401).json({ error: 'Unauthorized' });
       }
 
-      if (pass !== user.password) {
+      const user = await dbClient.db.collection('users').findOne({
+        email,
+        password: sha1(pass),
+      });
+
+      if (!user) {
         return response.status(401).json({ error: 'Unauthorized' });
       }
 
@@ -46,7 +46,7 @@ class AuthController {
         return response.status(401).json({ error: 'Unauthorized' });
       }
       await redisClient.del(`auth_${userToken}`);
-      return response.status(204).send('Disconnected');
+      return response.status(204).send();
     } catch (err) {
       console.log(err);
       return response.status(500).json({ error: 'Server error' });
