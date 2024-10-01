@@ -13,11 +13,7 @@ class FilesController {
     }
 
     const {
-      name,
-      type,
-      parentId = 0,
-      isPublic = false,
-      data,
+      name, type, parentId = 0, isPublic = false, data,
     } = req.body;
 
     if (!name) {
@@ -94,6 +90,70 @@ class FilesController {
       isPublic: newFile.isPublic,
       parentId: newFile.parentId,
     });
+  }
+
+  static async getShow(req, res) {
+    const token = req.header('X-Token');
+    if (!token) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const userId = await redisClient.get(`auth_${token}`);
+    const fileId = req.params.id || '';
+
+    const file = await dbClient.db.collection('files').findOne({
+      _id: ObjectId(fileId),
+      userId,
+    });
+    if (!file) {
+      return res.status(404).send({ error: 'Not found' });
+    }
+
+    return res.status(200).send({
+      id: file._id,
+      userId: file.userId,
+      name: file.name,
+      type: file.type,
+      isPublic: file.isPublic,
+      parentId: file.parentId,
+    });
+  }
+
+  static async getIndex(req, res) {
+    const token = req.header('X-Token');
+    if (!token) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const parentId = req.query.parentId || 0;
+    const page = parseInt(req.query.page, 10) || 0;
+    const pageSize = 20;
+
+    const aggData = [
+      { $match: parentId === 0 ? {} : { parentId } },
+      { $skip: page * pageSize },
+      { $limit: pageSize },
+    ];
+
+    const result = await dbClient.db
+      .collection('files')
+      .aggregate(aggData)
+      .toArray();
+
+    const files = [];
+    result.forEach((file) => {
+      const fileObj = {
+        id: file._id,
+        userId: file.userId,
+        name: file.name,
+        type: file.type,
+        isPublic: file.isPublic,
+        parentId: file.parentId,
+      };
+      files.push(fileObj);
+    });
+
+    return res.send(files);
   }
 }
 

@@ -6,16 +6,23 @@ const FilesController = require('../controllers/FilesController');
 const router = express.Router();
 // AppController routes:
 
-// get status when redis and DB is ALive:
+// Get status when redis and DB is ALive:
 router.get('/status', AppController.getStatus);
 
-// get all stats (users and files in DB):
+// Get all stats (users and files in DB):
 router.get('/stats', AppController.getStats);
 
-// create a new user in DB
+// Create a new user in DB
 router.post('/users', UsersController.postNew);
 
 // Create a new file in DB and in disk
 router.post('/files', FilesController.postUpload);
+
+// Retrieve the file document based on the ID
+router.get('/files/:id', FilesController.getShow);
+
+// retrieve all users file documents for a specific parentId
+// and with pagination
+router.get('/files', FilesController.getIndex);
 
 module.exports = router;
