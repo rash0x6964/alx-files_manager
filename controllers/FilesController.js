@@ -5,6 +5,7 @@ const mime = require('mime-types');
 const { ObjectId } = require('mongodb');
 const dbClient = require('../utils/db');
 const redisClient = require('../utils/redis');
+const { isValidMongodbId } = require('../utils/utils');
 
 class FilesController {
   static async postUpload(req, res) {
@@ -101,6 +102,9 @@ class FilesController {
     }
 
     const fileId = req.params.id || '';
+    if (!isValidMongodbId(fileId)) {
+      return res.status(404).send({ error: 'Not found' });
+    }
 
     const file = await dbClient.db.collection('files').findOne({
       _id: ObjectId(fileId),
@@ -160,6 +164,10 @@ class FilesController {
 
   static async getFile(req, res) {
     const fileId = req.params.id;
+
+    if (!isValidMongodbId(fileId)) {
+      return res.status(404).send({ error: 'Not found' });
+    }
 
     const file = await dbClient.db
       .collection('files')
