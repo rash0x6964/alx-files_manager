@@ -116,7 +116,7 @@ class FilesController {
 
     const file = await dbClient.db.collection('files').findOne({
       _id: ObjectId(fileId),
-      userId,
+      userId: ObjectId(userId),
     });
     if (!file) {
       return res.status(404).send({ error: 'Not found' });
@@ -144,7 +144,7 @@ class FilesController {
     const pageSize = 20;
 
     const aggData = [
-      { $match: parentId === 0 ? {} : { parentId } },
+      { $match: parentId === 0 ? {} : { parentId: ObjectId(parentId) } },
       { $skip: page * pageSize },
       { $limit: pageSize },
     ];
@@ -153,6 +153,8 @@ class FilesController {
       .collection('files')
       .aggregate(aggData)
       .toArray();
+
+    console.log('>>>>>>', result.length, aggData);
 
     const files = [];
     result.forEach((file) => {
