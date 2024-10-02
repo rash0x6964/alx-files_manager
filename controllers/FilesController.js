@@ -226,7 +226,7 @@ class FilesController {
   static async putPublish(req, res) {
     const token = req.header('X-Token');
     const userId = await redisClient.get(`auth_${token}`);
-    if (userId) {
+    if (!userId) {
       return res.status(401).send({ error: 'Unauthorized' });
     }
 
@@ -262,7 +262,7 @@ class FilesController {
   static async putUnpublish(req, res) {
     const token = req.header('X-Token');
     const userId = await redisClient.get(`auth_${token}`);
-    if (userId) {
+    if (!userId) {
       return res.status(401).send({ error: 'Unauthorized' });
     }
 
@@ -281,7 +281,7 @@ class FilesController {
       .collection('files')
       .findOneAndUpdate(
         { _id: ObjectId(fileId), userId },
-        { $set: { isPublic: true } },
+        { $set: { isPublic: false } },
         { returnDocument: 'after' },
       );
 
