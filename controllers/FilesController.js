@@ -1,6 +1,7 @@
 const { v4: uuidv4 } = require('uuid');
 const fs = require('fs');
 const path = require('path');
+const mime = require('mime-types');
 const { ObjectId } = require('mongodb');
 const dbClient = require('../utils/db');
 const redisClient = require('../utils/redis');
@@ -8,7 +9,8 @@ const redisClient = require('../utils/redis');
 class FilesController {
   static async postUpload(req, res) {
     const token = req.header('X-Token');
-    if (!token) {
+    const userId = await redisClient.get(`auth_${token}`);
+    if (!userId) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
@@ -40,7 +42,6 @@ class FilesController {
       }
     }
 
-    const userId = await redisClient.get(`auth_${token}`);
     const relativPath = process.env.FOLDER_PATH || '/tmp/files_manager';
 
     if (type === 'folder') {
@@ -155,6 +156,50 @@ class FilesController {
     });
 
     return res.send(files);
+  }
+
+  static async getFile(req, res) {
+    const fileId = req.params.id;
+
+    const file = await dbClient.db
+      .collection('files')
+      .findOne({ _id: ObjectId(fileId) });
+    if (!file) return res.status(404).json({ error: 'Not found' });
+
+    const token = req.header('X-Token');
+    const userId = await redisClient.get(`auth_${token}`);
+
+    if (!file.isPublic) {
+      if (file.userId !== userId) {
+        return res.status(404).json({ error: 'Not found' });
+      }
+    }
+
+    if (file.type === 'folder') {
+      return res.status(400).json({ error: "A folder doesn't have content" });
+    }
+
+    const filePath = file.localPath;
+    if (!fs.existsSync(filePath)) {
+      return res.status(404).json({ error: 'Not found' });
+    }
+
+    const mimeType = mime.lookup(file.name);
+    if (!mimeType) {
+      return res.status(400).json({ error: 'Unable to determine MIME type' });
+    }
+
+    res.setHeader('Content-Type', mimeType);
+    const fileStream = fs.createReadStream(filePath);
+    fileStream.pipe(res);
+
+    return new Promise((resolve, reject) => {
+      fileStream.on('end', resolve);
+      fileStream.on('error', (err) => {
+        res.status(500).json({ error: 'Internal Server Error' });
+        reject(err);
+      });
+    });
   }
 }
 
