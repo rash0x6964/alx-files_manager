@@ -31,4 +31,7 @@ router.get('/files/:id', FilesController.getShow);
 // and with pagination
 router.get('/files', FilesController.getIndex);
 
+// get the content of the file document based on the ID
+router.get('/files/:id/data', FilesController.getFile);
+
 module.exports = router;
