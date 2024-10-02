@@ -239,14 +239,14 @@ class FilesController {
 
     const file = await dbClient.db.collection('files').findOne({
       _id: ObjectId(fileId),
-      userId,
+      userId: ObjectId(userId),
     });
     if (!file) return res.status(404).send({ error: 'Not found' });
 
     const updatedFile = await dbClient.db
       .collection('files')
       .findOneAndUpdate(
-        { _id: ObjectId(fileId), userId },
+        { _id: ObjectId(fileId), userId: ObjectId(userId) },
         { $set: { isPublic: true } },
         { returnDocument: 'after' },
       );
@@ -275,14 +275,14 @@ class FilesController {
 
     const file = await dbClient.db.collection('files').findOne({
       _id: ObjectId(fileId),
-      userId,
+      userId: ObjectId(userId),
     });
     if (!file) return res.status(404).send({ error: 'Not found' });
 
     const updatedFile = await dbClient.db
       .collection('files')
       .findOneAndUpdate(
-        { _id: ObjectId(fileId), userId },
+        { _id: ObjectId(fileId), userId: ObjectId(userId) },
         { $set: { isPublic: false } },
         { returnDocument: 'after' },
       );
