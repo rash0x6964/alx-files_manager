@@ -6,6 +6,7 @@ const { ObjectId } = require('mongodb');
 const dbClient = require('../utils/db');
 const redisClient = require('../utils/redis');
 const { isValidMongodbId } = require('../utils/utils');
+const fileQueue = require('../worker');
 
 class FilesController {
   static async postUpload(req, res) {
@@ -83,6 +84,13 @@ class FilesController {
     };
 
     const result = await dbClient.db.collection('files').insertOne(newFile);
+
+    if (newFile.type === 'image') {
+      fileQueue.add({
+        userId: newFile.userId,
+        fileId: result.insertedId,
+      });
+    }
 
     return res.status(201).json({
       id: result.insertedId,
@@ -164,6 +172,7 @@ class FilesController {
 
   static async getFile(req, res) {
     const fileId = req.params.id;
+    const { size } = req.query;
 
     if (!isValidMongodbId(fileId)) {
       return res.status(404).send({ error: 'Not found' });
@@ -187,7 +196,11 @@ class FilesController {
       return res.status(400).json({ error: "A folder doesn't have content" });
     }
 
-    const filePath = file.localPath;
+    let filePath = file.localPath;
+    if (size && [100, 250, 500].includes(parseInt(size, 10))) {
+      filePath = `${filePath}_${size}`;
+    }
+
     if (!fs.existsSync(filePath)) {
       return res.status(404).json({ error: 'Not found' });
     }
