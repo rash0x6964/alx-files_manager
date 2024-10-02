@@ -4,17 +4,17 @@ const redisClient = require('../utils/redis');
 const dbClient = require('../utils/db');
 
 class AuthController {
-  static async getConnect(request, response) {
-    const authHeader = request.headers.authorization;
+  static async getConnect(req, res) {
+    const authHeader = req.headers.authorization;
     if (!authHeader) {
-      return response.status(401).json({ error: 'Unauthorized' });
+      return res.status(401).json({ error: 'Unauthorized' });
     }
     try {
       const auth = Buffer.from(authHeader.split(' ')[1], 'base64').toString();
       const [email, pass] = auth.split(':');
 
       if (!email || !pass) {
-        return response.status(401).json({ error: 'Unauthorized' });
+        return res.status(401).json({ error: 'Unauthorized' });
       }
 
       const user = await dbClient.db.collection('users').findOne({
@@ -23,7 +23,7 @@ class AuthController {
       });
 
       if (!user) {
-        return response.status(401).json({ error: 'Unauthorized' });
+        return res.status(401).json({ error: 'Unauthorized' });
       }
 
       const token = uuidv4();
@@ -31,25 +31,25 @@ class AuthController {
       const duration = 60 * 60 * 24;
       await redisClient.set(key, user._id.toString(), duration);
 
-      return response.status(200).json({ token });
+      return res.status(200).json({ token });
     } catch (err) {
       console.log(err);
-      return response.status(500).json({ error: 'Server error' });
+      return res.status(500).json({ error: 'Server error' });
     }
   }
 
-  static async getDisconnect(request, response) {
+  static async getDisconnect(req, res) {
     try {
-      const userToken = request.header('X-Token');
+      const userToken = req.header('X-Token');
       const userKey = await redisClient.get(`auth_${userToken}`);
       if (!userKey) {
-        return response.status(401).json({ error: 'Unauthorized' });
+        return res.status(401).json({ error: 'Unauthorized' });
       }
       await redisClient.del(`auth_${userToken}`);
-      return response.status(204).send();
+      return res.status(204).send();
     } catch (err) {
       console.log(err);
-      return response.status(500).json({ error: 'Server error' });
+      return res.status(500).json({ error: 'Server error' });
     }
   }
 }
