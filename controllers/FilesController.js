@@ -154,8 +154,6 @@ class FilesController {
       .aggregate(aggData)
       .toArray();
 
-    console.log('>>>>>>', result.length, aggData);
-
     const files = [];
     result.forEach((file) => {
       const fileObj = {
@@ -189,7 +187,7 @@ class FilesController {
     const userId = await redisClient.get(`auth_${token}`);
 
     if (!file.isPublic) {
-      if (file.userId !== userId) {
+      if (file.userId.toString() !== userId) {
         return res.status(404).json({ error: 'Not found' });
       }
     }
@@ -208,10 +206,6 @@ class FilesController {
     }
 
     const mimeType = mime.lookup(file.name);
-    if (!mimeType) {
-      return res.status(400).json({ error: 'Unable to determine MIME type' });
-    }
-
     res.setHeader('Content-Type', mimeType);
     const fileStream = fs.createReadStream(filePath);
     fileStream.pipe(res);
