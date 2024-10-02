@@ -14,7 +14,9 @@ class FilesController {
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
-    const { name, type, parentId = 0, isPublic = false, data } = req.body;
+    const {
+      name, type, parentId = 0, isPublic = false, data,
+    } = req.body;
 
     if (!name) {
       return res.status(400).json({ error: 'Missing name' });
@@ -190,6 +192,14 @@ class FilesController {
     res.setHeader('Content-Type', mimeType);
     const fileStream = fs.createReadStream(filePath);
     fileStream.pipe(res);
+
+    return new Promise((resolve, reject) => {
+      fileStream.on('end', resolve);
+      fileStream.on('error', (err) => {
+        res.status(500).json({ error: 'Internal Server Error' });
+        reject(err);
+      });
+    });
   }
 }
 
