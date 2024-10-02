@@ -21,6 +21,8 @@ router.get('/connect', AuthController.getConnect);
 router.get('/disconnect', AuthController.getDisconnect);
 router.get('/users/me', UsersController.getMe);
 
+/** File management */
+
 // Create a new file in DB and in disk
 router.post('/files', FilesController.postUpload);
 
@@ -33,5 +35,8 @@ router.get('/files', FilesController.getIndex);
 
 // get the content of the file document based on the ID
 router.get('/files/:id/data', FilesController.getFile);
+
+router.put('/files/:id/publish', FilesController.putPublish);
+router.put('/files/:id/unpublish', FilesController.putUnpublish);
 
 module.exports = router;
